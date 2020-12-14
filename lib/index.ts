@@ -1,4 +1,5 @@
 import { IControl, Map as MapboxMap } from "mapbox-gl";
+import distance from '@turf/distance';
 import { TerrainRGB } from '@watergis/terrain-rgb';
 
 const SOURCE_LINE = 'elev-controls-source-line';
@@ -13,13 +14,22 @@ type Options = {
   fontHalo: number;
   mainColor: string;
   haloColor: string;
-  elevLabelFormat?: Function;
+  labelFormat?: Function;
+  units: string;
 }
 
 /**
  * Mapbox GL Elevation Control.
  * @param {string} url - URL for terrain-rgb tilesets
  * @param {object} options - Options
+ * @param {String} [options.units='kilometers'] - Any units [@turf/distance](https://github.com/Turfjs/turf/tree/master/packages/turf-distance) supports
+ * @param {Function} [options.labelFormat] - Accepts number and returns label.
+ * Can be used to convert value to any measuring units
+ * @param {Array} [options.font=['sans]] - Array of fonts.
+ * @param {String} [options.mainColor='#263238'] - Color of ruler lines.
+ * @param {String} [options.haloColor='#fff'] - Color of halo and inner marker background.
+ * @param {String} [options.fontSize='12'] - Label font size
+ * @param {String} [options.fontHalo='1'] - Label font halo
  */
 
 export default class MapboxElevationControl implements IControl
@@ -34,7 +44,8 @@ export default class MapboxElevationControl implements IControl
     private elevations: number[] = [];
     private elevLabels : string[]= [];
     private url: string;
-    private elevLabelFormat: Function;
+    private labelFormat: Function;
+    private units: string;
     
     private options: Options = {
       tileSize: 512,
@@ -43,6 +54,7 @@ export default class MapboxElevationControl implements IControl
       fontHalo: 1,
       mainColor: '#263238',
       haloColor: '#fff',
+      units: 'kilometers',
     };
 
     constructor(url: string, options: Options)
@@ -51,7 +63,8 @@ export default class MapboxElevationControl implements IControl
       if (options){
         this.options = Object.assign(this.options, options);
       }
-      this.elevLabelFormat = options.elevLabelFormat || this.defaultElevLabelFormat;
+      this.labelFormat = options.labelFormat || this.defaultLabelFormat;
+      this.units = options.units;
       this.onDocumentClick = this.onDocumentClick.bind(this);
       this.mapClickListener = this.mapClickListener.bind(this);
       this.isQuery = false;
@@ -163,9 +176,6 @@ export default class MapboxElevationControl implements IControl
       const trgb = new TerrainRGB(this.url, this.options.tileSize);
       trgb.getElevation(lnglat, zoom)
       .then(elev=>{
-        if (elev < 0){
-          elev = 0;
-        }
         if (this_.map) {
           const markerNode = document.createElement('div');
           markerNode.style.width = '12px';
@@ -194,14 +204,26 @@ export default class MapboxElevationControl implements IControl
     }
 
     elevationsToLabels() {
-      const { elevations, elevLabelFormat } = this;
-      return elevations.map(elev => {
-        return elevLabelFormat(elev);
+      const { coordinates, elevations, labelFormat, units } = this;
+      let sum = 0;
+      return coordinates.map((coordinate ,index) => {
+        let elev = elevations[index];
+        if (index === 0) return labelFormat(0, elev);
+        sum += distance(coordinates[index - 1], coordinates[index], { units });
+        return labelFormat(sum, elev);
       });
     }
 
-    private defaultElevLabelFormat(elevation: number) {
-      return `alt.${elevation}m`;
+    private defaultLabelFormat(length: number, elevation: number) {
+      let lengthLabel = `${length.toFixed(2)} km`;
+      if (length < 1) {
+        lengthLabel = `${(length * 1000).toFixed()} m`;
+      }
+      let elevLabel = '';
+      if (elevation > 0){
+        elevLabel = `\nalt.${elevation}m`;
+      }
+      return `${lengthLabel}${elevLabel}`;
     }
 
     private geoLineString(coordinates: number[][] = []): any {
