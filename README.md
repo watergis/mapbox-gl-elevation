@@ -1,4 +1,5 @@
 # mapbox-gl-elevation
+![](https://github.com/watergis/mapbox-gl-elevation/workflows/Node.js%20Package/badge.svg)
 ![GitHub](https://img.shields.io/github/license/watergis/mapbox-gl-elevation)
 
 This module adds elevation control to mapbox-gl.
