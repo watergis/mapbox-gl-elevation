@@ -1,0 +1,49 @@
+{
+  "name": "@watergis/mapbox-gl-elevation",
+  "version": "1.0.0",
+  "description": "This module adds elevation control to mapbox-gl.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "css"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && webpack --config webpack.js",
+    "start": "webpack-dev-server --open --hot --inline --config webpack.js"
+  },
+  "keywords": [
+    "mapbox",
+    "mapbox-gl-js",
+    "elevation",
+    "terrain-rgb"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/watergis/mapbox-gl-elevation.git"
+  },
+  "author": "Jin IGARASHI",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/watergis/mapbox-gl-elevation/issues"
+  },
+  "homepage": "https://github.com/watergis/mapbox-gl-elevation#readme",
+  "devDependencies": {
+    "@types/mapbox-gl": "^1.13.0",
+    "css-loader": "^3.6.0",
+    "es6-promise": "^4.2.8",
+    "jquery": "^3.5.1",
+    "path": "^0.12.7",
+    "style-loader": "^1.2.1",
+    "ts-loader": "^8.0.12",
+    "typescript": "^3.9.7",
+    "webpack": "^4.44.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "@watergis/terrain-rgb": "^1.0.0",
+    "mapbox-gl": "^1.13.0"
+  }
+}

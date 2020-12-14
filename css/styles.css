@@ -1,0 +1,40 @@
+.mapboxgl-print-list
+{
+    display: none;
+}
+
+.mapboxgl-ctrl-group .mapboxgl-elevation-list button
+{
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: block;
+    font-size: 14px;
+    padding: 8px 8px 6px;
+    text-align: right;
+    width: 100%;
+    height: auto;
+}
+
+.mapboxgl-elevation-list button.active
+{
+    font-weight: bold;
+}
+
+.mapboxgl-elevation-list button:hover
+{
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.mapboxgl-elevation-list button + button
+{
+    border-top: 1px solid #ddd;
+}
+
+.mapboxgl-elevation-control
+{ 
+    background: url('data:image/svg+xml;charset=UTF-8,<svg id="Capa_1" enable-background="new 0 0 355.175 355.175" height="355.175" viewBox="0 0 355.175 355.175" width="355.175" xmlns="http://www.w3.org/2000/svg"><g><path d="M346.175,191.576h-46.989l-33.557-36.854c-3.194-3.508-8.563-3.934-12.27-0.975l-20.818,16.62l-54.918-86.747 c-1.65-2.606-4.52-4.186-7.604-4.186s-5.954,1.58-7.604,4.186l-46.893,74.071L97.94,131.962c-1.677-2.454-4.458-3.922-7.431-3.922 s-5.753,1.468-7.431,3.922L42.34,191.576H9c-4.971,0-9,4.029-9,9s4.029,9,9,9h21.039l-7.162,10.479	c-2.805,4.104-1.751,9.704,2.353,12.509c1.553,1.062,3.321,1.57,5.07,1.57c2.873,0,5.696-1.373,7.439-3.923l3.47-5.078 l49.301-72.141l14.529,21.261l-32.212,50.881l-23.292,36.792c-2.659,4.2-1.41,9.759,2.79,12.418 c1.494,0.945,3.159,1.396,4.806,1.396c2.981,0,5.899-1.481,7.612-4.187l4.277-6.756l101-159.536l82.055,129.612l2.049,3.236 c2.658,4.199,8.218,5.448,12.418,2.79c3.822-2.42,5.19-7.24,3.402-11.253c-0.177-0.396-0.373-0.788-0.612-1.165l-27.104-42.813 l15.771-12.591l54.048,59.359l6.299,6.918c1.776,1.951,4.212,2.941,6.657,2.941c2.163,0,4.332-0.775,6.057-2.345 c3.675-3.347,3.942-9.039,0.596-12.714l-16.08-17.66h30.6c4.971,0,9-4.029,9-9S351.146,191.576,346.175,191.576z"/></g></svg>');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 70%;
+}
