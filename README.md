@@ -34,7 +34,7 @@ const map = new mapboxgl.Map();
 map.addControl(new MapboxElevationControl(
         'https://wasac.github.io/rw-terrain/tiles/{z}/{x}/{y}.png',
         { 
-          font: ['sans'],
+          font: ['Roboto Medium'],
           fontSize: 12,
           fontHalo: 1,
           mainColor: '#263238',
