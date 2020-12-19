@@ -16,6 +16,12 @@ $(function(){
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
     map.addControl(new MapboxElevationControl(
         'https://wasac.github.io/rw-terrain/tiles/{z}/{x}/{y}.png',
-        { tileSize: 512}
+        { 
+            font: ['Roboto Medium'],
+            fontSize: 12,
+            fontHalo: 1,
+            mainColor: '#263238',
+            haloColor: '#fff',
+        }
     ), 'top-right');
 })
