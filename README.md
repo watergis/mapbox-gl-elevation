@@ -14,6 +14,8 @@ npm i @watergis/mapbox-gl-elevation --save
 
 See [demo](https://watergis.github.io/mapbox-gl-elevation/#12/-1.08551/35.87063).
 
+![demo](./demo.gif)
+
 ## Test:
 
 ```
