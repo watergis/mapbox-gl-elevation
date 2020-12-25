@@ -37,19 +37,20 @@ export default class MapboxElevationControl implements IControl
 
     private container: HTMLElement;
     private map?: MapboxMap;
-    private button: HTMLButtonElement;
+    private measureButton: HTMLButtonElement;
+    private downloadButton: HTMLButtonElement;
+    private clearButton: HTMLButtonElement;
     private isQuery: boolean;
     private markers: mapboxgl.Marker[] = [];
     private coordinates : number[][] = [];
     private elevations: number[] = [];
-    private elevLabels : string[]= [];
     private url: string;
     private labelFormat: Function;
     private units: string;
     
     private options: Options = {
       tileSize: 512,
-      font: ['sans'],
+      font: ['Roboto Medium'],
       fontSize: 12,
       fontHalo: 1,
       mainColor: '#263238',
@@ -83,38 +84,102 @@ export default class MapboxElevationControl implements IControl
         this.container.classList.add('mapboxgl-ctrl');
         this.container.classList.add('mapboxgl-ctrl-group');
         this.container.classList.add('mapboxgl-elevation-list');
-        this.button = document.createElement('button');
-        this.button.classList.add('mapboxgl-elevation-control');
-        this.button.setAttribute('type', 'button');
-        this.button.addEventListener("click", () => {
+        this.measureButton = document.createElement('button');
+        this.measureButton.classList.add('mapboxgl-elevation-measure-button');
+        this.measureButton.setAttribute('type', 'button');
+        this.measureButton.addEventListener("click", () => {
           if (this.isQuery) {
             this.measuringOff();
           } else {
             this.measuringOn();
           }
         });
-        this.container.appendChild(this.button);
+        this.container.appendChild(this.measureButton);
+
+        this.clearButton = document.createElement('button');
+        this.clearButton.classList.add('mapboxgl-elevation-clear-button');
+        this.clearButton.style.display = "none";
+        this.clearButton.setAttribute('type', 'button');
+        this.clearButton.addEventListener("click", () => {
+          this.clearFeatures();
+          this.initFeatures();
+        });
+        this.container.appendChild(this.clearButton);
+
+        this.downloadButton = document.createElement('button');
+        this.downloadButton.classList.add('mapboxgl-elevation-download-button');
+        this.downloadButton.style.display = "none";
+        this.downloadButton.setAttribute('type', 'button');
+        this.downloadButton.addEventListener("click", () => {
+          if (this.coordinates.length === 0) return;
+          const points = this.geoPoint(this.coordinates)
+          points.features.forEach(f=>{
+            delete f.properties.text;
+          })
+          if (this.coordinates.length > 1){
+            const line = this.geoLineString(this.coordinates);
+            points.features.push(line);
+          }
+          const fileName = "elevations.geojson";
+          const content = JSON.stringify(points);
+          this.download(fileName, content)
+        });
+        this.container.appendChild(this.downloadButton);
 
         return this.container;
     }
 
+    download(fileName, content){
+      const blob = new Blob([ content ], { "type" : "text/plain" });
+          const CAN_USE_SAVE_BLOB = window.navigator.msSaveBlob !== undefined;
+          if ( CAN_USE_SAVE_BLOB ) {
+            window.navigator.msSaveBlob( blob, fileName );
+            return;
+          }
+          const aTag = document.createElement("a");
+          aTag.href = URL.createObjectURL( blob );
+          aTag.setAttribute( 'download', fileName );
+          aTag.dispatchEvent( new MouseEvent( 'click' ) );
+    }
+
     measuringOn(){
-      this.markers = [];
-      this.coordinates = [];
-      this.elevations = [];
-      this.elevLabels = [];
       this.isQuery = true;
       if (this.map){
         this.map.getCanvas().style.cursor = 'crosshair';
-        this.button.classList.add('-active');
+        this.measureButton.classList.add('-active');
+        this.clearButton.style.display = "block";
+        this.downloadButton.style.display = "block";
+        this.initFeatures();
+        this.map.on('click', this.mapClickListener);
+        this.map.fire('elevation.on');
+      }
+    }
 
+    measuringOff(){
+      this.isQuery = false;
+      if (this.map){
+        this.map.getCanvas().style.cursor = '';
+        this.measureButton.classList.remove('-active');
+        this.clearButton.style.display = "none";
+        this.downloadButton.style.display = "none";
+        this.clearFeatures();
+        this.map.off('click', this.mapClickListener);
+        this.map.fire('elevation.off');
+      }
+    }
+
+    initFeatures(){
+      this.markers = [];
+      this.coordinates = [];
+      this.elevations = [];
+      if (this.map){
         this.map.addSource(SOURCE_LINE, {
           type: 'geojson',
           data: this.geoLineString(this.coordinates),
         });
         this.map.addSource(SOURCE_SYMBOL, {
           type: 'geojson',
-          data: this.geoPoint(this.coordinates, this.elevLabels),
+          data: this.geoPoint(this.coordinates),
         });
         this.map.addLayer({
           id: LAYER_LINE,
@@ -144,25 +209,15 @@ export default class MapboxElevationControl implements IControl
             'text-halo-width': this.options.fontHalo,
           },
         });
-
-        this.map.on('click', this.mapClickListener);
-        this.map.fire('elevation.on');
       }
     }
 
-    measuringOff(){
-      this.isQuery = false;
-      if (this.map){
-        this.map.getCanvas().style.cursor = '';
-        this.button.classList.remove('-active');
-        this.map.removeLayer(LAYER_LINE);
-        this.map.removeLayer(LAYER_SYMBOL);
-        this.map.removeSource(SOURCE_LINE);
-        this.map.removeSource(SOURCE_SYMBOL);
-        this.markers.forEach((m) => m.remove());
-        this.map.off('click', this.mapClickListener);
-        this.map.fire('elevation.off');
-      }
+    clearFeatures(){
+      this.map?.removeLayer(LAYER_LINE);
+      this.map?.removeLayer(LAYER_SYMBOL);
+      this.map?.removeSource(SOURCE_LINE);
+      this.map?.removeSource(SOURCE_SYMBOL);
+      this.markers.forEach((m) => m.remove());
     }
 
     mapClickListener(event){
@@ -172,7 +227,7 @@ export default class MapboxElevationControl implements IControl
         zoom = 15;
       }
       zoom = Math.round(zoom);
-      const lnglat = [event.lngLat.lng, event.lngLat.lat]
+      const lnglat : number[] = [event.lngLat.lng, event.lngLat.lat]
       const trgb = new TerrainRGB(this.url, this.options.tileSize);
       trgb.getElevation(lnglat, zoom)
       .then(elev=>{
@@ -191,27 +246,15 @@ export default class MapboxElevationControl implements IControl
           }).setLngLat(event.lngLat).addTo(this_.map);
           this.markers.push(marker);
 
-          this_.coordinates.push(lnglat);
+          this_.coordinates.push([lnglat[0], lnglat[1], elev]);
           this_.elevations.push(elev);
-          this_.elevLabels = this_.elevationsToLabels();
           // @ts-ignore
           this_.map.getSource(SOURCE_LINE).setData(this_.geoLineString(this.coordinates));
           // @ts-ignore
-          this_.map.getSource(SOURCE_SYMBOL).setData(this_.geoPoint(this.coordinates, this.elevLabels));
+          this_.map.getSource(SOURCE_SYMBOL).setData(this_.geoPoint(this.coordinates));
         };
         
       })
-    }
-
-    elevationsToLabels() {
-      const { coordinates, elevations, labelFormat, units } = this;
-      let sum = 0;
-      return coordinates.map((coordinate ,index) => {
-        let elev = elevations[index];
-        if (index === 0) return labelFormat(0, elev);
-        sum += distance(coordinates[index - 1], coordinates[index], { units });
-        return labelFormat(sum, elev);
-      });
     }
 
     private defaultLabelFormat(length: number, elevation: number) {
@@ -237,25 +280,35 @@ export default class MapboxElevationControl implements IControl
       };
     }
 
-    private geoPoint(coordinates: number[][] = [], labels: string[] = []): any {
+    private geoPoint(coordinates: number[][] = []): any {
+      const {labelFormat, units} = this;
+      let sum = 0;
       return {
         type: 'FeatureCollection',
-        features: coordinates.map((c, i) => ({
-          type: 'Feature',
-          properties: {
-            text: labels[i],
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: c,
-          },
-        })),
+        features: coordinates.map((c, i) => {
+          if (i > 0){
+            sum += distance(coordinates[i - 1], coordinates[i], { units });
+          }
+          return ({
+            type: 'Feature',
+            properties: {
+              id: i + 1,
+              text: labelFormat(sum, c[2]),
+              elevation: c[2],
+              length: (sum * 1000).toFixed()
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: c,
+            },
+          })
+        }),
       };
     }
 
     public onRemove(): void
     {
-      if (!this.container || !this.container.parentNode || !this.map || !this.button) {
+      if (!this.container || !this.container.parentNode || !this.map || !this.measureButton) {
         return;
       }
       if (this.isQuery) {
@@ -268,8 +321,8 @@ export default class MapboxElevationControl implements IControl
     }
 
     private onDocumentClick(event: MouseEvent): void{
-      if (this.container && !this.container.contains(event.target as Element) && this.button) {
-        this.button.style.display = "block";
+      if (this.container && !this.container.contains(event.target as Element) && this.measureButton) {
+        this.measureButton.style.display = "block";
       }
     }
 }
