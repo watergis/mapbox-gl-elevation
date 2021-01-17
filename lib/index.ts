@@ -237,6 +237,7 @@ export default class MapboxElevationControl implements IControl
       const trgb = new TerrainRGB(this.url, this.options.tileSize);
       trgb.getElevation(lnglat, zoom)
       .then(elev=>{
+        if (!elev) elev = -1;
         if (this_.map) {
           const markerNode = document.createElement('div');
           markerNode.style.width = '12px';
@@ -293,6 +294,7 @@ export default class MapboxElevationControl implements IControl
         type: 'FeatureCollection',
         features: coordinates.map((c, i) => {
           if (i > 0){
+            // @ts-ignore
             sum += distance(coordinates[i - 1], coordinates[i], { units });
           }
           return ({
