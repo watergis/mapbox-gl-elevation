@@ -213,15 +213,21 @@ export default class MapboxElevationControl implements IControl
     }
 
     clearFeatures(){
-      this.map?.removeLayer(LAYER_LINE);
-      this.map?.removeLayer(LAYER_SYMBOL);
-      this.map?.removeSource(SOURCE_LINE);
-      this.map?.removeSource(SOURCE_SYMBOL);
+      if (this.map){
+        if (this.map.getLayer(LAYER_LINE)) this.map.removeLayer(LAYER_LINE);
+        if (this.map.getLayer(LAYER_SYMBOL)) this.map.removeLayer(LAYER_SYMBOL);
+        if (this.map.getSource(SOURCE_LINE)) this.map.removeSource(SOURCE_LINE);
+        if (this.map.getSource(SOURCE_SYMBOL)) this.map.removeSource(SOURCE_SYMBOL);
+      }
       this.markers.forEach((m) => m.remove());
     }
 
     mapClickListener(event){
       const this_ = this;
+      if (!this_.map?.getSource(SOURCE_LINE) || !this_.map?.getSource(SOURCE_SYMBOL)){
+        this.clearFeatures();
+        this_.initFeatures();
+      }
       let zoom = this.map?.getZoom();
       if (!zoom) {
         zoom = 15;
