@@ -1,6 +1,6 @@
 {
   "name": "@watergis/mapbox-gl-elevation",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "This module adds elevation control to mapbox-gl.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
