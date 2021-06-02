@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
+    mode: 'development',
     entry: './example/index.js',
     plugins: [
         new webpack.ProvidePlugin({
@@ -10,7 +11,7 @@ module.exports = {
     ],
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'docs'),
+        path: path.resolve(__dirname, 'example'),
     },
     module: {
         rules: [
@@ -24,7 +25,7 @@ module.exports = {
             {
                 test: /\.ts$/,
                 use: 'ts-loader',
-              },
+            }
         ],
     },
     resolve: {
@@ -32,11 +33,11 @@ module.exports = {
           '.ts', '.js',
         ],
     },
-    mode: 'production',
+    
     devtool: 'inline-source-map',
     devServer: {
         watchContentBase: true,
-        contentBase: './docs',
+        contentBase: './example',
     },
     externals: {
         'mapbox-gl': 'mapboxgl'

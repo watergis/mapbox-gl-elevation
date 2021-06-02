@@ -1,9 +1,8 @@
-import $ from 'jquery';
 import mapboxgl from 'mapbox-gl';
-import MapboxElevationControl from '../dist/index';
+import MapboxElevationControl from '../lib/index';
 import '../css/styles.css';
 
-$(function(){
+(() => {
     // mapboxgl.accessToken='your mapbox access token'
     const map = new mapboxgl.Map({
         container: 'map',
@@ -24,4 +23,4 @@ $(function(){
             haloColor: '#fff',
         }
     ), 'top-right');
-})
+})();
