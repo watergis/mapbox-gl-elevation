@@ -1,4 +1,4 @@
-import { IControl, Map as MapboxMap } from "mapbox-gl";
+import { IControl, Map as MapboxMap } from 'mapbox-gl';
 import distance from '@turf/distance';
 import { TerrainRGB } from '@watergis/terrain-rgb';
 
@@ -9,14 +9,14 @@ const SOURCE_SYMBOL = 'elev-controls-source-symbol';
 
 type Options = {
   tileSize: number;
-  font: string[]
+  font: string[];
   fontSize: number;
   fontHalo: number;
   mainColor: string;
   haloColor: string;
   labelFormat?: Function;
   units: string;
-}
+};
 
 /**
  * Mapbox GL Elevation Control.
@@ -32,22 +32,31 @@ type Options = {
  * @param {String} [options.fontHalo='1'] - Label font halo
  */
 
-export default class MapboxElevationControl implements IControl
-{
-
+export default class MapboxElevationControl implements IControl {
     private container: HTMLElement;
+
     private map?: MapboxMap;
+
     private measureButton: HTMLButtonElement;
+
     private downloadButton: HTMLButtonElement;
+
     private clearButton: HTMLButtonElement;
+
     private isQuery: boolean;
+
     private markers: mapboxgl.Marker[] = [];
+
     private coordinates : number[][] = [];
+
     private elevations: number[] = [];
+
     private url: string;
+
     private labelFormat: Function;
+
     private units: string;
-    
+
     private options: Options = {
       tileSize: 512,
       font: ['Roboto Medium'],
@@ -58,10 +67,9 @@ export default class MapboxElevationControl implements IControl
       units: 'kilometers',
     };
 
-    constructor(url: string, options: Options)
-    {
+    constructor(url: string, options: Options) {
       this.url = url;
-      if (options){
+      if (options) {
         this.options = Object.assign(this.options, options);
       }
       this.labelFormat = options.labelFormat || this.defaultLabelFormat;
@@ -71,108 +79,106 @@ export default class MapboxElevationControl implements IControl
       this.isQuery = false;
     }
 
-    public getDefaultPosition(): string
-    {
-        const defaultPosition = "top-right";
-        return defaultPosition;
+    public getDefaultPosition(): string {
+      const defaultPosition = 'top-right';
+      return defaultPosition;
     }
 
-    public onAdd(map: MapboxMap): HTMLElement
-    {
-        this.map = map;
-        this.container = document.createElement("div");
-        this.container.classList.add('mapboxgl-ctrl');
-        this.container.classList.add('mapboxgl-ctrl-group');
-        this.container.classList.add('mapboxgl-elevation-list');
-        this.measureButton = document.createElement('button');
-        this.measureButton.classList.add('mapboxgl-elevation-measure-button');
-        this.measureButton.setAttribute('type', 'button');
-        this.measureButton.addEventListener("click", () => {
-          if (this.isQuery) {
-            this.measuringOff();
-          } else {
-            this.measuringOn();
-          }
-        });
-        this.container.appendChild(this.measureButton);
+    public onAdd(map: MapboxMap): HTMLElement {
+      this.map = map;
+      this.container = document.createElement('div');
+      this.container.classList.add('mapboxgl-ctrl');
+      this.container.classList.add('mapboxgl-ctrl-group');
+      this.container.classList.add('mapboxgl-elevation-list');
+      this.measureButton = document.createElement('button');
+      this.measureButton.classList.add('mapboxgl-elevation-measure-button');
+      this.measureButton.setAttribute('type', 'button');
+      this.measureButton.addEventListener('click', () => {
+        if (this.isQuery) {
+          this.measuringOff();
+        } else {
+          this.measuringOn();
+        }
+      });
+      this.container.appendChild(this.measureButton);
 
-        this.clearButton = document.createElement('button');
-        this.clearButton.classList.add('mapboxgl-elevation-clear-button');
-        this.clearButton.style.display = "none";
-        this.clearButton.setAttribute('type', 'button');
-        this.clearButton.addEventListener("click", () => {
-          this.clearFeatures();
-          this.initFeatures();
-        });
-        this.container.appendChild(this.clearButton);
+      this.clearButton = document.createElement('button');
+      this.clearButton.classList.add('mapboxgl-elevation-clear-button');
+      this.clearButton.style.display = 'none';
+      this.clearButton.setAttribute('type', 'button');
+      this.clearButton.addEventListener('click', () => {
+        this.clearFeatures();
+        this.initFeatures();
+      });
+      this.container.appendChild(this.clearButton);
 
-        this.downloadButton = document.createElement('button');
-        this.downloadButton.classList.add('mapboxgl-elevation-download-button');
-        this.downloadButton.style.display = "none";
-        this.downloadButton.setAttribute('type', 'button');
-        this.downloadButton.addEventListener("click", () => {
-          if (this.coordinates.length === 0) return;
-          const points = this.geoPoint(this.coordinates)
-          points.features.forEach(f=>{
-            delete f.properties.text;
-          })
-          if (this.coordinates.length > 1){
-            const line = this.geoLineString(this.coordinates);
-            points.features.push(line);
-          }
-          const fileName = "elevations.geojson";
-          const content = JSON.stringify(points);
-          this.download(fileName, content)
+      this.downloadButton = document.createElement('button');
+      this.downloadButton.classList.add('mapboxgl-elevation-download-button');
+      this.downloadButton.style.display = 'none';
+      this.downloadButton.setAttribute('type', 'button');
+      this.downloadButton.addEventListener('click', () => {
+        if (this.coordinates.length === 0) return;
+        const points = this.geoPoint(this.coordinates);
+        points.features.forEach((f) => {
+          delete f.properties.text;
         });
-        this.container.appendChild(this.downloadButton);
+        if (this.coordinates.length > 1) {
+          const line = this.geoLineString(this.coordinates);
+          points.features.push(line);
+        }
+        const fileName = 'elevations.geojson';
+        const content = JSON.stringify(points);
+        this.download(fileName, content);
+      });
+      this.container.appendChild(this.downloadButton);
 
-        return this.container;
+      return this.container;
     }
 
-    download(fileName, content){
-      const blob = new Blob([ content ], { "type" : "text/plain" });
-          const CAN_USE_SAVE_BLOB = window.navigator.msSaveBlob !== undefined;
-          if ( CAN_USE_SAVE_BLOB ) {
-            window.navigator.msSaveBlob( blob, fileName );
-            return;
-          }
-          const aTag = document.createElement("a");
-          aTag.href = URL.createObjectURL( blob );
-          aTag.setAttribute( 'download', fileName );
-          aTag.dispatchEvent( new MouseEvent( 'click' ) );
+    download(fileName, content) {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const CAN_USE_SAVE_BLOB = window.navigator.msSaveBlob !== undefined;
+      if (CAN_USE_SAVE_BLOB) {
+        window.navigator.msSaveBlob(blob, fileName);
+        return;
+      }
+      const aTag = document.createElement('a');
+      aTag.href = URL.createObjectURL(blob);
+      aTag.setAttribute('download', fileName);
+      aTag.dispatchEvent(new MouseEvent('click'));
     }
 
-    measuringOn(){
+    measuringOn() {
       this.isQuery = true;
-      if (this.map){
+      if (this.map) {
         this.map.getCanvas().style.cursor = 'crosshair';
         this.measureButton.classList.add('-active');
-        this.clearButton.style.display = "block";
-        this.downloadButton.style.display = "block";
+        this.clearButton.style.display = 'block';
+        this.downloadButton.style.display = 'block';
         this.initFeatures();
         this.map.on('click', this.mapClickListener);
         this.map.fire('elevation.on');
       }
     }
 
-    measuringOff(){
+    measuringOff() {
       this.isQuery = false;
-      if (this.map){
+      if (this.map) {
         this.map.getCanvas().style.cursor = '';
         this.measureButton.classList.remove('-active');
-        this.clearButton.style.display = "none";
-        this.downloadButton.style.display = "none";
+        this.clearButton.style.display = 'none';
+        this.downloadButton.style.display = 'none';
         this.clearFeatures();
         this.map.off('click', this.mapClickListener);
         this.map.fire('elevation.off');
       }
     }
 
-    initFeatures(){
+    initFeatures() {
       this.markers = [];
       this.coordinates = [];
       this.elevations = [];
-      if (this.map){
+      if (this.map) {
         this.map.addSource(SOURCE_LINE, {
           type: 'geojson',
           data: this.geoLineString(this.coordinates),
@@ -212,8 +218,8 @@ export default class MapboxElevationControl implements IControl
       }
     }
 
-    clearFeatures(){
-      if (this.map){
+    clearFeatures() {
+      if (this.map) {
         if (this.map.getLayer(LAYER_LINE)) this.map.removeLayer(LAYER_LINE);
         if (this.map.getLayer(LAYER_SYMBOL)) this.map.removeLayer(LAYER_SYMBOL);
         if (this.map.getSource(SOURCE_LINE)) this.map.removeSource(SOURCE_LINE);
@@ -222,9 +228,9 @@ export default class MapboxElevationControl implements IControl
       this.markers.forEach((m) => m.remove());
     }
 
-    mapClickListener(event){
+    mapClickListener(event) {
       const this_ = this;
-      if (!this_.map?.getSource(SOURCE_LINE) || !this_.map?.getSource(SOURCE_SYMBOL)){
+      if (!this_.map?.getSource(SOURCE_LINE) || !this_.map?.getSource(SOURCE_SYMBOL)) {
         this.clearFeatures();
         this_.initFeatures();
       }
@@ -233,35 +239,34 @@ export default class MapboxElevationControl implements IControl
         zoom = 15;
       }
       zoom = Math.round(zoom);
-      const lnglat : number[] = [event.lngLat.lng, event.lngLat.lat]
+      const lnglat : number[] = [event.lngLat.lng, event.lngLat.lat];
       const trgb = new TerrainRGB(this.url, this.options.tileSize);
       trgb.getElevation(lnglat, zoom)
-      .then(elev=>{
-        if (!elev) elev = -1;
-        if (this_.map) {
-          const markerNode = document.createElement('div');
-          markerNode.style.width = '12px';
-          markerNode.style.height = '12px';
-          markerNode.style.borderRadius = '50%';
-          markerNode.style.background = this_.options.haloColor;
-          markerNode.style.boxSizing = 'border-box';
-          markerNode.style.border = `2px solid ${this_.options.mainColor}`;
-          // @ts-ignore
-          const marker = new mapboxgl.Marker({
-            element: markerNode,
-            draggable: true,
-          }).setLngLat(event.lngLat).addTo(this_.map);
-          this.markers.push(marker);
+        .then((elev) => {
+          if (!elev) elev = -1;
+          if (this_.map) {
+            const markerNode = document.createElement('div');
+            markerNode.style.width = '12px';
+            markerNode.style.height = '12px';
+            markerNode.style.borderRadius = '50%';
+            markerNode.style.background = this_.options.haloColor;
+            markerNode.style.boxSizing = 'border-box';
+            markerNode.style.border = `2px solid ${this_.options.mainColor}`;
+            // @ts-ignore
+            const marker = new mapboxgl.Marker({
+              element: markerNode,
+              draggable: true,
+            }).setLngLat(event.lngLat).addTo(this_.map);
+            this.markers.push(marker);
 
-          this_.coordinates.push([lnglat[0], lnglat[1], elev]);
-          this_.elevations.push(elev);
-          // @ts-ignore
-          this_.map.getSource(SOURCE_LINE).setData(this_.geoLineString(this.coordinates));
-          // @ts-ignore
-          this_.map.getSource(SOURCE_SYMBOL).setData(this_.geoPoint(this.coordinates));
-        };
-        
-      })
+            this_.coordinates.push([lnglat[0], lnglat[1], elev]);
+            this_.elevations.push(elev);
+            // @ts-ignore
+            this_.map.getSource(SOURCE_LINE).setData(this_.geoLineString(this.coordinates));
+            // @ts-ignore
+            this_.map.getSource(SOURCE_SYMBOL).setData(this_.geoPoint(this.coordinates));
+          }
+        });
     }
 
     private defaultLabelFormat(length: number, elevation: number) {
@@ -270,7 +275,7 @@ export default class MapboxElevationControl implements IControl
         lengthLabel = `${(length * 1000).toFixed()} m`;
       }
       let elevLabel = '';
-      if (elevation > 0){
+      if (elevation > 0) {
         elevLabel = `\nalt.${elevation}m`;
       }
       return `${lengthLabel}${elevLabel}`;
@@ -288,12 +293,12 @@ export default class MapboxElevationControl implements IControl
     }
 
     private geoPoint(coordinates: number[][] = []): any {
-      const {labelFormat, units} = this;
+      const { labelFormat, units } = this;
       let sum = 0;
       return {
         type: 'FeatureCollection',
         features: coordinates.map((c, i) => {
-          if (i > 0){
+          if (i > 0) {
             // @ts-ignore
             sum += distance(coordinates[i - 1], coordinates[i], { units });
           }
@@ -303,19 +308,18 @@ export default class MapboxElevationControl implements IControl
               id: i + 1,
               text: labelFormat(sum, c[2]),
               elevation: c[2],
-              length: (sum * 1000).toFixed()
+              length: (sum * 1000).toFixed(),
             },
             geometry: {
               type: 'Point',
               coordinates: c,
             },
-          })
+          });
         }),
       };
     }
 
-    public onRemove(): void
-    {
+    public onRemove(): void {
       if (!this.container || !this.container.parentNode || !this.map || !this.measureButton) {
         return;
       }
@@ -324,13 +328,15 @@ export default class MapboxElevationControl implements IControl
       }
       this.map.off('click', this.mapClickListener);
       this.container.parentNode.removeChild(this.container);
-      document.removeEventListener("click", this.onDocumentClick);
+      document.removeEventListener('click', this.onDocumentClick);
       this.map = undefined;
     }
 
-    private onDocumentClick(event: MouseEvent): void{
-      if (this.container && !this.container.contains(event.target as Element) && this.measureButton) {
-        this.measureButton.style.display = "block";
+    private onDocumentClick(event: MouseEvent): void {
+      if (this.container
+        && !this.container.contains(event.target as Element)
+        && this.measureButton) {
+        this.measureButton.style.display = 'block';
       }
     }
 }
