@@ -15,6 +15,8 @@ npm i @watergis/mapbox-gl-elevation --save
 
 ## Demo:
 
+Try [codesandbox](https://codesandbox.io/s/mapbox-gl-elevation-cldfe).
+
 See [demo](https://watergis.github.io/mapbox-gl-elevation/#12/-1.08551/35.87063).
 
 ![demo](./demo.gif)
