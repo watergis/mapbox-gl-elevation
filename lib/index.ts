@@ -1,4 +1,4 @@
-import { IControl, Map as MapboxMap } from 'mapbox-gl';
+import { IControl, Map as MapboxMap, Marker } from 'mapbox-gl';
 import distance from '@turf/distance';
 import { TerrainRGB } from '@watergis/terrain-rgb';
 
@@ -45,7 +45,7 @@ export default class MapboxElevationControl implements IControl {
 
     private isQuery: boolean;
 
-    private markers: mapboxgl.Marker[] = [];
+    private markers: Marker[] = [];
 
     private coordinates : number[][] = [];
 
@@ -253,7 +253,7 @@ export default class MapboxElevationControl implements IControl {
             markerNode.style.boxSizing = 'border-box';
             markerNode.style.border = `2px solid ${this_.options.mainColor}`;
             // @ts-ignore
-            const marker = new mapboxgl.Marker({
+            const marker = new Marker({
               element: markerNode,
               draggable: true,
             }).setLngLat(event.lngLat).addTo(this_.map);
